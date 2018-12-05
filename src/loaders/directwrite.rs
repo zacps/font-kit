@@ -20,7 +20,7 @@ use dwrote::GlyphOffset as DWriteGlyphOffset;
 use dwrote::GlyphRunAnalysis as DWriteGlyphRunAnalysis;
 use dwrote::InformationalStringId as DWriteInformationalStringId;
 use dwrote::{DWRITE_GLYPH_RUN, DWRITE_MEASURING_MODE_NATURAL, DWRITE_RENDERING_MODE_ALIASED};
-use dwrote::{DWRITE_RENDERING_MODE_NATURAL, DWRITE_TEXTURE_ALIASED_1x1};
+use dwrote::{DWRITE_RENDERING_MODE_NATURAL, DWRITE_TEXTURE_ALIASED_1x1, DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC, DWRITE_RENDERING_MODE_DEFAULT};
 use dwrote::{DWRITE_TEXTURE_CLEARTYPE_3x1, OutlineBuilder};
 use euclid::{Point2D, Rect, Size2D, Vector2D};
 use lyon_path::PathEvent;
@@ -444,9 +444,9 @@ impl Font {
     fn build_glyph_analysis(&self,
                             glyph_id: u32,
                             point_size: f32,
-                            origin: &Point2D<f32>,
+                            _origin: &Point2D<f32>,
                             hinting_options: HintingOptions,
-                            rasterization_options: RasterizationOptions)
+                            _rasterization_options: RasterizationOptions)
                             -> DWriteGlyphRunAnalysis {
         unsafe {
             let glyph_id = glyph_id as u16;
@@ -466,10 +466,14 @@ impl Font {
                 bidiLevel: 0,
             };
 
-            let rendering_mode = match rasterization_options {
-                RasterizationOptions::Bilevel => DWRITE_RENDERING_MODE_ALIASED,
-                RasterizationOptions::GrayscaleAa | RasterizationOptions::SubpixelAa => {
-                    DWRITE_RENDERING_MODE_NATURAL
+            let rendering_mode = match hinting_options {
+                HintingOptions::None => DWRITE_RENDERING_MODE_ALIASED,
+                // This does not match semantics
+                HintingOptions::Vertical(_) | HintingOptions::VerticalSubpixel(_) => DWRITE_RENDERING_MODE_DEFAULT,
+                // Missing horozontal hinting
+                //HintingOptions::Horozontal(_) | => DWRITE_RENDERING_MODE_NATURAL
+                HintingOptions::Full(_) => {
+                    DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC
                 }
             };
 
