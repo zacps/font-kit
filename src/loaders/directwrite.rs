@@ -288,10 +288,8 @@ impl Font {
     pub fn origin(&self, glyph: u32) -> Result<Point2D<f32>, GlyphLoadingError> {
         let metrics = self.dwrite_font_face.get_design_glyph_metrics(&[glyph as u16], false);
         Ok(Point2D::new(
-            // not sure if this should be calculated from left + right side bearing. 
-            // See https://github.com/pcwalton/font-kit/issues/15
-           0.0, 
-            metrics[0].verticalOriginY as f32
+            metrics[0].leftSideBearing as f32,
+            (metrics[0].verticalOriginY + metrics[0].bottomSideBearing) as f32
         ))
     }
 
@@ -362,7 +360,7 @@ impl Font {
         let texture_width = texture_bounds.right - texture_bounds.left;
         let texture_height = texture_bounds.bottom - texture_bounds.top;
 
-        Ok(Rect::new(Point2D::new(0, 0), Size2D::new(texture_width, texture_height).to_i32()))
+        Ok(Rect::new(origin.round().cast::<i32>(), Size2D::new(texture_width, texture_height).to_i32()))
     }
 
     /// Rasterizes a glyph to a canvas with the given size and origin.
